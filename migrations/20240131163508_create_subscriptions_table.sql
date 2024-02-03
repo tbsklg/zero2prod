@@ -5,5 +5,5 @@ CREATE TABLE subscriptions(
   email TEXT NOT NULL UNIQUE,
   name TEXT NOT NULL,
   --timezone aware date and time type
-  subscriped_at timestamptz NOT NULL
+  subscribed_at timestamptz NOT NULL
 );
