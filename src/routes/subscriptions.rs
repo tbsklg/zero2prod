@@ -1,7 +1,6 @@
 use actix_web::{web, HttpResponse};
 use chrono::Utc;
 use sqlx::PgPool;
-use unicode_segmentation::UnicodeSegmentation;
 use uuid::Uuid;
 
 use crate::domain::{NewSubscriber, SubscriberName};
@@ -18,9 +17,14 @@ fields(
 subscriber_email = %form.email, subscriber_name = %form.name
 ) )]
 pub async fn subscribe(form: web::Form<FormData>, db_pool: web::Data<PgPool>) -> HttpResponse {
+    let name = match SubscriberName::parse(form.0.name) {
+        Ok(name) => name,
+        Err(_) => return HttpResponse::BadRequest().finish(),
+    };
+
     let new_subscriber = NewSubscriber {
         email: form.0.email,
-        name: SubscriberName::parse(form.0.name),
+        name,
     };
 
     match insert_subscriber(&new_subscriber, &db_pool).await {
@@ -49,6 +53,6 @@ pub async fn insert_subscriber(new_subscriber: &NewSubscriber, db_pool: &PgPool)
     .map_err(|e| {
         tracing::error!("Failed to execute query: {:?}", e);
         e
-    })?;
+    })?; //triggers an early return
     Ok(())
 }
